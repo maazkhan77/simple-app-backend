@@ -7,12 +7,21 @@ from psycopg2.pool import ThreadedConnectionPool
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-pool = ThreadedConnectionPool(1, 10, DATABASE_URL, cursor_factory=RealDictCursor)
+_pool = None
+
+
+def _get_pool():
+    global _pool
+    if _pool is None:
+        if not DATABASE_URL:
+            raise RuntimeError("DATABASE_URL environment variable is not set")
+        _pool = ThreadedConnectionPool(1, 10, DATABASE_URL, cursor_factory=RealDictCursor)
+    return _pool
 
 
 @contextmanager
 def get_db():
-    conn = pool.getconn()
+    conn = _get_pool().getconn()
     try:
         yield conn
         conn.commit()
@@ -20,4 +29,4 @@ def get_db():
         conn.rollback()
         raise
     finally:
-        pool.putconn(conn)
+        _get_pool().putconn(conn)
