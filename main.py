@@ -31,3 +31,8 @@ app.include_router(projects.router)
 @app.get("/")
 def root():
     return {"ok": True}
+
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
