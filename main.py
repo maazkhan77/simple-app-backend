@@ -76,26 +76,42 @@ def debug_db():
 
 @app.get("/debug/net")
 def debug_net():
-    import requests
+    import socket
     from urllib.parse import urlparse
     results = {}
     db_url = os.getenv("DATABASE_URL", "")
     neon_host = urlparse(db_url).hostname if db_url else None
 
-    targets = [
-        ("https://www.google.com", "google"),
-        ("https://api.github.com", "github_api"),
+    hosts = [
+        ("www.google.com", 443, "google_443"),
+        ("api.github.com", 443, "github_443"),
+        ("github.com", 443, "github_root_443"),
     ]
     if neon_host:
-        targets.append((f"https://{neon_host}/sql", "neon_sql"))
+        hosts.append((neon_host, 443, "neon_443"))
 
-    for url, label in targets:
+    for host, port, label in hosts:
+        # DNS lookup first with timeout via socket.getaddrinfo (no direct timeout, but fast)
         try:
-            r = requests.get(url, timeout=8)
-            results[label] = {"ok": True, "status": r.status_code, "url": url}
+            socket.setdefaulttimeout(3)
+            ip = socket.gethostbyname(host)
+            results[f"{label}_dns"] = ip
         except Exception as e:
-            results[label] = {"ok": False, "error": str(e), "url": url}
-    return {"build": "fa11a6e+net", "results": results}
+            results[f"{label}_dns"] = f"FAIL: {e}"
+            continue
+
+        # TCP connect test with 3s timeout
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(3)
+        try:
+            s.connect((host, port))
+            results[label] = "TCP OK"
+        except Exception as e:
+            results[label] = f"TCP FAIL: {e}"
+        finally:
+            s.close()
+    socket.setdefaulttimeout(None)
+    return {"build": "1750f23+tcp", "results": results}
 
 
 if __name__ == "__main__":
