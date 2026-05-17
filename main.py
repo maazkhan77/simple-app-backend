@@ -19,7 +19,10 @@ app = FastAPI()
 
 @app.on_event("startup")
 def on_startup():
-    init_db.main()
+    try:
+        init_db.main()
+    except Exception as e:
+        print(f"[startup] DB init skipped: {e}")
 
 app.add_middleware(
     CORSMiddleware,
