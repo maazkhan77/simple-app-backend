@@ -4,6 +4,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+print(f"[boot] DATABASE_URL set: {bool(os.getenv('DATABASE_URL'))}")
+print(f"[boot] SECRET_KEY set: {bool(os.getenv('SECRET_KEY'))}")
+print(f"[boot] GITHUB_CLIENT_ID set: {bool(os.getenv('GITHUB_CLIENT_ID'))}")
+print(f"[boot] FRONTEND_URL: {os.getenv('FRONTEND_URL')}")
+print(f"[boot] BACKEND_URL: {os.getenv('BACKEND_URL')}")
+print(f"[boot] PORT: {os.getenv('PORT')}")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
