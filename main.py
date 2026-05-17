@@ -74,6 +74,30 @@ def debug_db():
         return {"db": "failed", "error": str(e)}
 
 
+@app.get("/debug/net")
+def debug_net():
+    import requests
+    from urllib.parse import urlparse
+    results = {}
+    db_url = os.getenv("DATABASE_URL", "")
+    neon_host = urlparse(db_url).hostname if db_url else None
+
+    targets = [
+        ("https://www.google.com", "google"),
+        ("https://api.github.com", "github_api"),
+    ]
+    if neon_host:
+        targets.append((f"https://{neon_host}/sql", "neon_sql"))
+
+    for url, label in targets:
+        try:
+            r = requests.get(url, timeout=8)
+            results[label] = {"ok": True, "status": r.status_code, "url": url}
+        except Exception as e:
+            results[label] = {"ok": False, "error": str(e), "url": url}
+    return {"build": "fa11a6e+net", "results": results}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
