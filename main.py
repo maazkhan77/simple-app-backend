@@ -45,6 +45,35 @@ def health():
     return {"status": "healthy"}
 
 
+@app.get("/debug/env")
+def debug_env():
+    return {
+        "DATABASE_URL": bool(os.getenv("DATABASE_URL")),
+        "SECRET_KEY": bool(os.getenv("SECRET_KEY")),
+        "GITHUB_CLIENT_ID": bool(os.getenv("GITHUB_CLIENT_ID")),
+        "GITHUB_CLIENT_SECRET": bool(os.getenv("GITHUB_CLIENT_SECRET")),
+        "GOOGLE_CLIENT_ID": bool(os.getenv("GOOGLE_CLIENT_ID")),
+        "GOOGLE_CLIENT_SECRET": bool(os.getenv("GOOGLE_CLIENT_SECRET")),
+        "FRONTEND_URL": os.getenv("FRONTEND_URL"),
+        "BACKEND_URL": os.getenv("BACKEND_URL"),
+        "PORT": os.getenv("PORT"),
+    }
+
+
+@app.get("/debug/db")
+def debug_db():
+    try:
+        from db import get_db
+        with get_db() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT 1 AS ok")
+            row = cur.fetchone()
+            cur.close()
+        return {"db": "connected", "result": dict(row)}
+    except Exception as e:
+        return {"db": "failed", "error": str(e)}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
