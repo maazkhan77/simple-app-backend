@@ -70,7 +70,11 @@ def _get_pool():
     if _pool is None:
         if not DATABASE_URL:
             raise RuntimeError("DATABASE_URL environment variable is not set")
-        _pool = ThreadedConnectionPool(1, 10, DATABASE_URL, cursor_factory=RealDictCursor)
+        _pool = ThreadedConnectionPool(
+            1, 10, DATABASE_URL,
+            cursor_factory=RealDictCursor,
+            connect_timeout=10,
+        )
     return _pool
 
 
