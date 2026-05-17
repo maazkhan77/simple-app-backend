@@ -10,10 +10,16 @@ from fastapi.middleware.cors import CORSMiddleware
 import auth
 import projects
 import repos
+import init_db
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 app = FastAPI()
+
+
+@app.on_event("startup")
+def on_startup():
+    init_db.main()
 
 app.add_middleware(
     CORSMiddleware,
